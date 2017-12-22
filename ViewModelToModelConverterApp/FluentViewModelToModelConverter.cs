@@ -27,8 +27,25 @@ namespace ViewModelToModelConverterApp
 		}
 		public FluentViewModelToModelConverter<From, To> MapProperty<FromPropertyType, ToPropertyType>(Expression<Func<From, FromPropertyType>>fromProperty, Expression<Func<To, ToPropertyType>> toProperty)
 		{
-			fromProperty.GetPropertyInfo()
+			//fromProperty.GetPropertyInfo()
 			return this;
 		}
+
+		public FluentViewModelToModelConverter<From, To> UpdateProperties(Expression<Func<From, List<object>>> fromProperty)
+		{
+			var infos = fromProperty.GetPropertyInfos();
+			return this;
+		}
+		/// <summary>
+		/// Trying to find a way to do this:
+		/// converter.UpdateProperties((e) => e.Name, e.IsDone, e.TestSubObject, e.Children);
+		/// </summary>
+		/// <param name=""></param>
+		/// <returns></returns>
+		//public FluentViewModelToModelConverter<From, To> UpdateProperties(Expression<Func<> fromProperty)
+		//{
+		//	var infos = fromProperty.GetPropertyInfos();
+		//	return this;
+		//}
 	}
 }

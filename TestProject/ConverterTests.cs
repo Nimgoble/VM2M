@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ViewModelToModelConverterApp;
 
@@ -58,13 +59,13 @@ namespace TestProject
 				}
 			};
 
-			var converter = new FluentViewModelToModelConverter<TestViewModel, TestModel>();
-			converter.Convert(viewModel, model);
+			var converter = new ViewModelToModelConverter();
+			converter.Convert(viewModel, model, typeof(TestModel));
 
 			Assert.AreEqual(viewModel.Name, model.Name);
 			Assert.AreEqual(viewModel.IsDone, model.IsDoneIndicator.FromIndicator());
 			Assert.AreEqual(viewModel.Children.Count, model.Children.Count);
-			for(int i = 0; i < viewModel.Children.Count; ++i)
+			for (int i = 0; i < viewModel.Children.Count; ++i)
 			{
 				var vmChild = viewModel.Children[i];
 				var mChild = model.Children[i];
@@ -99,8 +100,8 @@ namespace TestProject
 				}
 			};
 
-			var converter = new FluentViewModelToModelConverter<TestViewModel, TestModel>();
-			var model  = converter.Convert(viewModel);
+			var converter = new ViewModelToModelConverter();
+			var model = (TestModel)converter.Convert(viewModel, typeof(TestModel));
 
 			Assert.AreEqual(viewModel.Name, model.Name);
 			Assert.AreEqual(viewModel.IsDone, model.IsDoneIndicator.FromIndicator());
@@ -171,8 +172,8 @@ namespace TestProject
 				}
 			};
 
-			var converter = new FluentViewModelToModelConverter<TestViewModel, TestModel>();
-			converter.Convert(viewModel, model);
+			var converter = new ViewModelToModelConverter();
+			converter.Convert(viewModel, model, typeof(TestModel));
 
 			Assert.AreEqual(viewModel.Name, model.Name);
 			Assert.AreEqual(viewModel.IsDone, model.IsDoneIndicator.FromIndicator());
@@ -243,8 +244,8 @@ namespace TestProject
 				}
 			};
 
-			var converter = new FluentViewModelToModelConverter<TestViewModel, TestModel>();
-			converter.Convert(viewModel, model);
+			var converter = new ViewModelToModelConverter();
+			converter.Convert(viewModel, model, typeof(TestModel));
 
 			Assert.AreEqual(viewModel.Name, model.Name);
 			Assert.AreEqual(viewModel.IsDone, model.IsDoneIndicator.FromIndicator());
@@ -290,8 +291,8 @@ namespace TestProject
 			};
 			model.Children = new System.Collections.Generic.List<TestChildModel>();
 
-			var converter = new FluentViewModelToModelConverter<TestViewModel, TestModel>();
-			converter.Convert(viewModel, model);
+			var converter = new ViewModelToModelConverter();
+			converter.Convert(viewModel, model, typeof(TestModel));
 
 			Assert.AreEqual(viewModel.Name, model.Name);
 			Assert.AreEqual(viewModel.IsDone, model.IsDoneIndicator.FromIndicator());
@@ -334,14 +335,84 @@ namespace TestProject
 			};
 			model.Children = new System.Collections.Generic.List<TestChildModel>();
 
-			var converter = new FluentViewModelToModelConverter<TestViewModel, TestModel>();
-			converter.Convert(viewModel, model);
-			converter.MapProperty((vm) => vm.PrimaryKey, (m) => m.PrimaryKey);
+			var converter = new ViewModelToModelConverter();
+			converter.Convert(viewModel, model, typeof(TestModel));
+			//converter.MapProperty((vm) => vm.PrimaryKey, (m) => m.PrimaryKey);
 
 			Assert.AreEqual(viewModel.Name, model.Name);
 			Assert.AreEqual(viewModel.IsDone, model.IsDoneIndicator.FromIndicator());
 			Assert.AreEqual(viewModel.TestSubObject, model.TestSubObject);
 			Assert.AreEqual(viewModel.Children.Count, model.Children.Count);
+			//for (int i = 0; i < viewModel.Children.Count; ++i)
+			//{
+			//	var vmChild = viewModel.Children[i];
+			//	var mChild = model.Children[i];
+			//	Assert.AreEqual(vmChild.Name, mChild.Name);
+			//	Assert.AreEqual(vmChild.Capacity, mChild.Capacity);
+			//}
+		}
+	}
+
+	[TestClass]
+	public class FluentConverterTests
+	{
+		[TestMethod]
+		public void TestConversion_Existing_MatchingChildren()
+		{
+			//var viewModel = new TestViewModel()
+			//{
+			//	Name = "Test Model - Changed",
+			//	IsDone = true,
+			//	PrimaryKey = 1
+			//};
+			//viewModel.Children = new System.Collections.Generic.List<TestChildViewModel>()
+			//{
+			//	new TestChildViewModel()
+			//	{
+			//		Name = "Child 1 - Modified",
+			//		Capacity = 100,
+			//		ParentID = 1,
+			//		PrimaryKey = 1
+			//	},
+			//	new TestChildViewModel()
+			//	{
+			//		Name = "Child 2 - Modified",
+			//		Capacity = 200,
+			//		ParentID = 1,
+			//		PrimaryKey = 2
+			//	}
+			//};
+
+			//var model = new TestModel()
+			//{
+			//	Name = "Test Model",
+			//	IsDoneIndicator = false.ToIndicator(),
+			//	PrimaryKey = 1
+			//};
+			//model.Children = new System.Collections.Generic.List<TestChildModel>()
+			//{
+			//	new TestChildModel()
+			//	{
+			//		Name = "Child 1",
+			//		Capacity = 50,
+			//		ParentID = 1,
+			//		PrimaryKey = 1
+			//	},
+			//	new TestChildModel()
+			//	{
+			//		Name = "Child 2",
+			//		Capacity = 100,
+			//		ParentID = 1,
+			//		PrimaryKey = 2
+			//	}
+			//};
+
+			var converter = new FluentViewModelToModelConverter<TestViewModel, TestModel>();
+			converter.UpdateProperties((e) => new List<object>() { e.Name, e.IsDone, e.TestSubObject, e.Children });
+
+			//Assert.AreEqual(viewModel.Name, model.Name);
+			//Assert.AreEqual(viewModel.IsDone, model.IsDoneIndicator.FromIndicator());
+			//Assert.AreEqual(viewModel.Children.Count, model.Children.Count);
 			//for (int i = 0; i < viewModel.Children.Count; ++i)
 			//{
 			//	var vmChild = viewModel.Children[i];
