@@ -9,6 +9,29 @@ namespace ViewModelToModelConverterApp
 {
 	public class ViewModelToModelConverter
 	{
+		public class PropertyMapping
+		{
+			public Type FromType { get; set; }
+			public PropertyInfo FromProperty { get; set; }
+			public Type ToType { get; set; }
+			public PropertyInfo ToProperty { get; set; }
+			public ConversionRule ConversionRule { get; set; }
+			public override bool Equals(object obj)
+			{
+				if (!(obj is PropertyMapping))
+					return false;
+				var castedObj = obj as PropertyMapping;
+				return 
+					this.FromType == castedObj.FromType && 
+					this.FromProperty == castedObj.FromProperty && 
+					this.ToType == castedObj.ToType && 
+					this.ToProperty == castedObj.ToProperty;
+			}
+			public override int GetHashCode()
+			{
+				return Tuple.Create(FromType, FromProperty, ToType, ToProperty).GetHashCode();
+			}
+		}
 		#region ConversionRules
 		public class ConversionRule
 		{
@@ -67,11 +90,23 @@ namespace ViewModelToModelConverterApp
 		}
 		#endregion
 
-		#region Private Methods
-		private void CopyProperties(object from, object to, Action<object, Type> deleteAction = null)
+		#region Non-Public Methods
+		private void MapProperties(Type fromType, Type toType)
 		{
-			var fromProperties = from.GetType().GetProperties();
-			var toProperties = to.GetType().GetProperties();
+
+		}
+		protected virtual List<PropertyMapping> GetPropertyMappings()
+		{
+
+		}
+		protected virtual List<PropertyInfo> GetPropertiesForType(Type type)
+		{
+			return type.GetProperties().ToList();
+		}
+		protected void CopyProperties(object from, object to, Action<object, Type> deleteAction = null)
+		{
+			var fromProperties = GetPropertiesForType(from.GetType());
+			var toProperties = GetPropertiesForType(to.GetType());
 			bool hasConversionRules = conversionRules.Any();
 			foreach (var fromProperty in fromProperties)
 			{
@@ -115,7 +150,7 @@ namespace ViewModelToModelConverterApp
 				}
 			}
 		}
-		private (PropertyInfo, ConversionRule) FindCorrespondingProperty(PropertyInfo fromProperty, IEnumerable<PropertyInfo> toProperties)
+		protected virtual (PropertyInfo, ConversionRule) FindCorrespondingProperty(PropertyInfo fromProperty, IEnumerable<PropertyInfo> toProperties)
 		{
 			var rtn = toProperties.SingleOrDefault(x => x.Name == fromProperty.Name);
 			ConversionRule conversionRule = null;
@@ -150,9 +185,6 @@ namespace ViewModelToModelConverterApp
 			var keyMappings = from fromKey in fromKeyProperties where toType.GetProperties().SingleOrDefault(x => x.Name == fromKey.Name) != null select Tuple.Create(fromKey, toType.GetProperties().SingleOrDefault(x => x.Name == fromKey.Name));
 
 			//Need to be able to add to it, so it needs to be IList
-			//var entitySetType = typeof(EntitySet<>).MakeGenericType(toType);
-			//var toCollection = toProperty.GetValue(to);
-			//if (toCollection == null)
 			var toCollection = (IList)toProperty.GetValue(to);
 			IList toRemove = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(toType));
 			if (toCollection == null)
@@ -176,18 +208,17 @@ namespace ViewModelToModelConverterApp
 				deleteAction?.Invoke(remove, toType);
 			}
 
-			var collectionConverter = new ViewModelToModelConverter();
 			foreach (var fromElement in fromCollection)
 			{
 				var keyValues = (from mapping in keyMappings select Tuple.Create(mapping.Item2, mapping.Item1.GetValue(fromElement))).ToList();
 				var matchingElement = FindMatchingObject(toCollection, keyValues);
 				bool notFound = matchingElement == null;
-				matchingElement = collectionConverter.Convert(fromElement, matchingElement, toType);
+				matchingElement = Convert(fromElement, matchingElement, toType);
 				if (notFound)
 					toCollection.Add(matchingElement);
 			}
 		}
-		private object FindMatchingObject(IEnumerable targetCollection, List<Tuple<PropertyInfo, object>> keyValues)
+		protected virtual object FindMatchingObject(IEnumerable targetCollection, List<Tuple<PropertyInfo, object>> keyValues)
 		{
 			object rtn = null;
 			foreach (var target in targetCollection)
@@ -201,11 +232,11 @@ namespace ViewModelToModelConverterApp
 
 			return rtn;
 		}
-		private bool ObjectIsAMatch(object target, List<Tuple<PropertyInfo, object>> keyValues)
+		protected bool ObjectIsAMatch(object target, List<Tuple<PropertyInfo, object>> keyValues)
 		{
 			return !keyValues.Any(keyValue => !keyValue.Item1.GetValue(target).Equals(keyValue.Item2));
 		}
-		private bool IsPropertyACollection(PropertyInfo property)
+		protected bool IsPropertyACollection(PropertyInfo property)
 		{
 			return (!typeof(String).Equals(property.PropertyType) &&
 				typeof(IEnumerable).IsAssignableFrom(property.PropertyType));
@@ -215,7 +246,7 @@ namespace ViewModelToModelConverterApp
 		/// </summary>
 		/// <param name="type"></param>
 		/// <returns></returns>
-		private bool IsSimpleType(Type type)
+		protected bool IsSimpleType(Type type)
 		{
 			return
 				type.IsPrimitive ||

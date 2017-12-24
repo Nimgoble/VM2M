@@ -409,6 +409,7 @@ namespace TestProject
 
 			var converter = new FluentViewModelToModelConverter<TestViewModel, TestModel>();
 			converter.UpdateProperties((e) => new List<object>() { e.Name, e.IsDone, e.TestSubObject, e.Children });
+			converter.UpdateProperties(e => e.Name, e => e.IsDone, e => e.Children);
 
 			//Assert.AreEqual(viewModel.Name, model.Name);
 			//Assert.AreEqual(viewModel.IsDone, model.IsDoneIndicator.FromIndicator());
